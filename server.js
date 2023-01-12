@@ -16,7 +16,7 @@ const svgTargetHeight = "100px"
 const svgTargetWidth = "100px"
 
 async function app(){
-  rl.question("Choose mode (1. Crop SVG | 2. Convert cropped SVG to TSX \n", (answer) => {
+  rl.question("Choose mode (1. Crop SVG | 2. Convert cropped SVG to TSX | 3. Exit) \n", (answer) => {
     if (answer === "1") cropSVG()
     if (answer === "2") convertSVGtoTSX()
     rl.close()
@@ -56,7 +56,7 @@ const templateForTypeScriptReactComponent = (fileName, content) => {
 function cropSVG(){
   fs.readdir(importPath, (err, files) => {
     if (err) throw err
-    
+
     files.forEach((file) => {
       const fileWithoutFormat = file.split(".")[0]
       fs.readFile(`${importPath}/${fileWithoutFormat}.svg`, (err, data) => {
@@ -65,13 +65,13 @@ function cropSVG(){
         const { createSVGWindow } = require("svgdom")
         const window = createSVGWindow()
         const { document } = window
-        
+
         registerWindow(window, document)
         const { x, y, width, height } = SVG(svgAsString).bbox()
         const viewBox = SVG(svgAsString).node.getAttribute("viewBox")
         const sourceString = viewBox ? /viewBox="\d* \d* \d* \d*"/ : /width="\d+.?\d*" height="\d+.?\d*"/
-        
-        const replacementString = `width='${svgTargetWidth}' height='${svgTargetHeight}' viewBox="${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)}"`
+
+        const replacementString = `width='{size}' height='{size}' viewBox="${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)}"`
         const croppedSVG = svgAsString.replace(sourceString, replacementString)
 
         fs.writeFile(`${exportPathSVG}/cropped_${fileWithoutFormat}.svg`, croppedSVG, err => {
@@ -86,7 +86,7 @@ function cropSVG(){
 function convertSVGtoTSX(){
   fs.readdir(importPath, (err, files) => {
     if (err) throw err
-    
+
     files.forEach((file) => {
       const fileWithoutFormat = file.split(".")[0]
       fs.readFile(`${importPath}/${fileWithoutFormat}.svg`, (err, data) => {
@@ -95,7 +95,7 @@ function convertSVGtoTSX(){
         const { createSVGWindow } = require("svgdom")
         const window = createSVGWindow()
         const { document } = window
-        
+
         registerWindow(window, document)
         const { x, y, width, height } = SVG(svgAsString).bbox()
         const viewBox = SVG(svgAsString).node.getAttribute("viewBox")
