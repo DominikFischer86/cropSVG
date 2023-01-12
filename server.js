@@ -8,16 +8,19 @@ const rl = readline.createInterface({ input: stdin, output: stdout })
 
 const require = createRequire(import.meta.url)
 
-const importPath = "./src/assets/icons/"
-const exportPathCrSVG = "./src/assets/croppedIcons/"
-const exportPathSqSVG = "./src/assets/squaredIcons/"
-const exportPathComponent = "./src/assets/iconComponents/"
+const assetRootPath = "./src/assets"
+const importPath = `${assetRootPath}/icons/`
+const exportPathCrSVG = `${assetRootPath}/croppedIcons/`
+const exportPathSqSVG = `${assetRootPath}/squaredIcons/`
+const exportPathComponent = `${assetRootPath}/iconComponents/`
 
 const svgTargetHeight = "100px"
 const svgTargetWidth = "100px"
 
 async function app(){
-  rl.question("Choose mode (1. Crop SVG To Square | 2. Remove Whitespace Around SVG | 3. Convert cropped SVG to TSX | 4. Exit) \n", (answer) => {
+  rl.question(
+    `-------------\nChoose mode:\n----------------------------------\n1. Crop SVG To Square\n2. Remove Whitespace Around SVG \n3. Convert cropped SVG to TSX \n4. Exit \n----------------------------------\n`, 
+    (answer) => {
     if (answer === "1") cropSVGToSquare()
     if (answer === "2") removeWhiteSpaceFromSVG()
     if (answer === "3") convertSVGtoTSX()
@@ -39,7 +42,7 @@ function toPascalCase(string) {
 }
 
 const formatName = (name) => {
-  return toPascalCase(name)+"Icon"
+  return `${toPascalCase(name)}Icon`
 }
 
 const templateForTypeScriptReactComponent = (fileName, content) => {
@@ -61,6 +64,8 @@ const { document } = window
 registerWindow(window, document)
 
 function cropSVGToSquare(){
+  if (!fs.existsSync(exportPathSqSVG)) fs.mkdirSync(exportPathSqSVG)
+
   fs.readdir(importPath, (err, files) => {
     if (err) throw err
 
@@ -86,6 +91,7 @@ function cropSVGToSquare(){
 }
 
 function removeWhiteSpaceFromSVG(){
+  if (!fs.existsSync(exportPathCrSVG)) fs.mkdirSync(exportPathCrSVG)
   fs.readdir(importPath, (err, files) => {
     if (err) throw err
 
@@ -112,6 +118,7 @@ function removeWhiteSpaceFromSVG(){
 
 
 function convertSVGtoTSX(){
+  if (!fs.existsSync(exportPathComponent)){ fs.mkdirSync(exportPathComponent) }
   fs.readdir(importPath, (err, files) => {
     if (err) throw err
 
