@@ -17,7 +17,7 @@ const svgTargetHeight = "100px"
 const svgTargetWidth = "100px"
 
 async function app(){
-  rl.question("Choose mode (1. Crop SVG To Square | 2. Remove Whitespace Around SVG | 3. Convert cropped SVG to TSX | 3. Exit) \n", (answer) => {
+  rl.question("Choose mode (1. Crop SVG To Square | 2. Remove Whitespace Around SVG | 3. Convert cropped SVG to TSX | 4. Exit) \n", (answer) => {
     if (answer === "1") cropSVGToSquare()
     if (answer === "2") removeWhiteSpaceFromSVG()
     if (answer === "3") convertSVGtoTSX()
@@ -78,7 +78,7 @@ function cropSVGToSquare(){
 
         fs.writeFile(`${exportPathSqSVG}/${fileWithoutFormat}.svg`, croppedSVG, err => {
           if (err) throw err
-          console.log(`File ${fileWithoutFormat}.svg succesfully written`);
+          console.log(`Cropped & Squared File ${fileWithoutFormat}.svg succesfully written`);
         })
       })
     })
@@ -103,7 +103,7 @@ function removeWhiteSpaceFromSVG(){
 
         fs.writeFile(`${exportPathCrSVG}/${fileWithoutFormat}.svg`, croppedSVG, err => {
           if (err) throw err
-          console.log(`File ${fileWithoutFormat}.svg succesfully written`);
+          console.log(`Cropped File ${fileWithoutFormat}.svg succesfully written`);
         })
       })
     })
