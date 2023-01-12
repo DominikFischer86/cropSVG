@@ -5,28 +5,26 @@ import { createRequire } from "module"
 import { stdin, stdout } from "process"
 
 const rl = readline.createInterface({ input: stdin, output: stdout })
-
 const require = createRequire(import.meta.url)
 
 const assetRootPath = "./src/assets"
 const importPath = `${assetRootPath}/icons/`
-const exportPathCrSVG = `${assetRootPath}/croppedIcons/`
-const exportPathSqSVG = `${assetRootPath}/squaredIcons/`
-const exportPathComponent = `${assetRootPath}/iconComponents/`
+const exportPaths = [
+  `${assetRootPath}/squaredIcons/`,
+  `${assetRootPath}/croppedIcons/`,
+  `${assetRootPath}/iconComponents/`
+]
 
-const svgTargetHeight = "100px"
-const svgTargetWidth = "100px"
+const svgTargetHeight = "500px"
+const svgTargetWidth = "500px"
 
-async function app(){
+function app(){
   rl.question(
     `-------------\nChoose mode:\n----------------------------------\n1. Crop SVG To Square\n2. Remove Whitespace Around SVG \n3. Convert cropped SVG to TSX \n4. Exit \n----------------------------------\n`, 
     (answer) => {
-    if (answer === "1") cropSVGToSquare()
-    if (answer === "2") removeWhiteSpaceFromSVG()
-    if (answer === "3") convertSVGtoTSX()
+    if (answer === "1" || answer === "2" || answer === "3") compileSvg(answer)
     rl.close()
   })
-
 }
 
 function toPascalCase(string) {
@@ -41,103 +39,58 @@ function toPascalCase(string) {
     .replace(new RegExp(/\w/), s => s.toUpperCase());
 }
 
-const formatName = (name) => {
-  return `${toPascalCase(name)}Icon`
-}
-
 const templateForTypeScriptReactComponent = (fileName, content) => {
-  return (`
-  import SvgIcon, { Props } from 'Icons/view/components/SvgIcon';
+  const name = `${toPascalCase(fileName)}Icon`
 
-  const ${formatName(fileName)} = (props: Omit<Props, 'children'>): React.ReactElement => (
+  return (`import SvgIcon, { Props } from 'Icons/view/components/SvgIcon';
+
+  const ${name} = (props: Omit<Props, 'children'>): React.ReactElement => (
     <SvgIcon {...props}>
       ${content}
     </SvgIcon>
   );
 
-  export default ${formatName(fileName)};
-`)}
+  export default ${name};`
+)}
 
 const { createSVGWindow } = require("svgdom")
 const window = createSVGWindow()
 const { document } = window
 registerWindow(window, document)
 
-function cropSVGToSquare(){
-  if (!fs.existsSync(exportPathSqSVG)) fs.mkdirSync(exportPathSqSVG)
+function compileSvg(mode){
+  if (!fs.existsSync(exportPaths[mode-1])) fs.mkdirSync(exportPaths[mode-1])
 
   fs.readdir(importPath, (err, files) => {
     if (err) throw err
 
     files.forEach((file) => {
-      const fileWithoutFormat = file.split(".")[0]
-      fs.readFile(`${importPath}/${fileWithoutFormat}.svg`, (err, data) => {
+      fs.readFile(`${importPath}/${file}`, (err, data) => {
         if (err) throw err
+        const fileWithoutFormat = file.split(".")[0]
         const svgAsString = data.toString()
         const { x, y, width, height } = SVG(svgAsString).bbox()
-        const viewBox = SVG(svgAsString).node.getAttribute("viewBox")
-        const sourceString = viewBox ? /viewBox="\d* \d* \d* \d*"/ : /width="\d+.?\d*" height="\d+.?\d*"/
+        const svgItem = SVG(svgAsString).node
 
-        const replacementString = `width='${svgTargetWidth}' height='${svgTargetHeight}' viewBox="${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)}"`
-        const croppedSVG = svgAsString.replace(sourceString, replacementString)
+        svgItem.setAttribute("viewBox", `${x} ${y} ${width} ${height}`)
+        if (mode === "1"){ 
+          svgItem.setAttribute("width", svgTargetWidth)
+          svgItem.setAttribute("height", svgTargetHeight)
+        }
 
-        fs.writeFile(`${exportPathSqSVG}/${fileWithoutFormat}.svg`, croppedSVG, err => {
-          if (err) throw err
-          console.log(`Cropped & Squared File ${fileWithoutFormat}.svg succesfully written`);
-        })
-      })
-    })
-  })
-}
+        if (mode !== "1"){
+          svgItem.removeAttribute("width")
+          svgItem.removeAttribute("height")
+        }
+        
+        const croppedSVG = mode !== "3" ? svgItem.outerHTML : templateForTypeScriptReactComponent(fileWithoutFormat, svgItem.outerHTML.toString())
+        const compiledFile = mode !== "3" ? file : `${fileWithoutFormat}.tsx`
 
-function removeWhiteSpaceFromSVG(){
-  if (!fs.existsSync(exportPathCrSVG)) fs.mkdirSync(exportPathCrSVG)
-  fs.readdir(importPath, (err, files) => {
-    if (err) throw err
-
-    files.forEach((file) => {
-      const fileWithoutFormat = file.split(".")[0]
-      fs.readFile(`${importPath}/${fileWithoutFormat}.svg`, (err, data) => {
-        if (err) throw err
-        const svgAsString = data.toString()
-        const { x, y, width, height } = SVG(svgAsString).bbox()
-        const viewBox = SVG(svgAsString).node.getAttribute("viewBox")
-        const sourceString = viewBox ? /viewBox="\d* \d* \d* \d*"/ : /width="\d+.?\d*" height="\d+.?\d*"/
-
-        const replacementString = `viewBox="${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)}"`
-        const croppedSVG = svgAsString.replace(sourceString, replacementString)
-
-        fs.writeFile(`${exportPathCrSVG}/${fileWithoutFormat}.svg`, croppedSVG, err => {
-          if (err) throw err
-          console.log(`Cropped File ${fileWithoutFormat}.svg succesfully written`);
-        })
-      })
-    })
-  })
-}
-
-
-function convertSVGtoTSX(){
-  if (!fs.existsSync(exportPathComponent)){ fs.mkdirSync(exportPathComponent) }
-  fs.readdir(importPath, (err, files) => {
-    if (err) throw err
-
-    files.forEach((file) => {
-      const fileWithoutFormat = file.split(".")[0]
-      fs.readFile(`${importPath}/${fileWithoutFormat}.svg`, (err, data) => {
-        if (err) throw err
-        const svgAsString = data.toString()
-        const { x, y, width, height } = SVG(svgAsString).bbox()
-        const viewBox = SVG(svgAsString).node.getAttribute("viewBox")
-        const sourceString = viewBox ? /viewBox="\d* \d* \d* \d*"/ : /width="\d+.?\d*" height="\d+.?\d*"/
-
-        const replacementString = `width='{size}' height='{size}' viewBox="${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)}"`
-        const croppedSVG = svgAsString.replace(sourceString, replacementString)
-        const createIconComponent = templateForTypeScriptReactComponent(fileWithoutFormat, croppedSVG)
-
-        fs.writeFile(`${exportPathComponent}/${fileWithoutFormat}.tsx`, createIconComponent, err => {
-          if (err) throw err
-          console.log(`File ${fileWithoutFormat}.tsx succesfully written`);
+        fs.writeFile(`${exportPaths[mode-1]}/${compiledFile}`, croppedSVG, err => {
+           if (err) throw err
+           if (mode === "1") console.log(`Cropped & squared file ${file} succesfully created`);
+           if (mode === "2") console.log(`Cropped file ${file} succesfully created`);
+           if (mode === "3") console.log(`Typescript React IconComponent ${fileWithoutFormat}.tsx succesfully created`);
         })
       })
     })
