@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+src/assets/croppedIcons/*
+src/assets/icons/*
+src/assets/iconComponents/*
+
+
 
 # Editor directories and files
 .vscode/*
