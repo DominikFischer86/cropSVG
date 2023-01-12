@@ -11,9 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
-src/assets/croppedIcons/*
-src/assets/icons/*
-src/assets/iconComponents/*
+src/assets/*
 
 
 
